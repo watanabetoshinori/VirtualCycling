@@ -12,9 +12,6 @@ import Combine
 /// コンテンツビューのビューモデル
 class ContentViewModel: ObservableObject {
 
-    /// 顔の傾き検出のしきい値. iPadのLandScapeで調整してあります.
-    let threshold = 0.2
-
     /// サイクルメーター
     var meter: CycleMeter
 
@@ -71,15 +68,15 @@ class ContentViewModel: ObservableObject {
         .store(in: &cancellables)
 
         // 顔の傾き
-        FaceTracking.shared.$medianLineDiff
+        FaceTracking.shared.$roll
             .throttle(for: .milliseconds(500), scheduler: RunLoop.main, latest: true).sink { (value) in
             self.face = String(format: "%0.4f", value)
 
-            // しきい値より傾きが大きい場合は左右に方向移動
-            if value < -self.threshold {
-                self.webViewModel.evalute(javaScript: "left();")
-            } else if self.threshold < value {
+            // rollが0以外の場合は左右に方向移動
+            if value < 0 {
                 self.webViewModel.evalute(javaScript: "right();")
+            } else if 0 < value {
+                self.webViewModel.evalute(javaScript: "left();")
             }
         }
         .store(in: &cancellables)
